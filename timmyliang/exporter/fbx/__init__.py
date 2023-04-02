@@ -158,11 +158,10 @@ def export_fbx(save_path, mapper, data, attr_list, controller):
 
     min_poly = min(idx_dict)
     idx_list = [idx - min_poly for idx in idx_dict]
-    idx_data = ",".join([str(idx) for idx in idx_list])
+    # idx_data = ",".join([str(idx) for idx in idx_list])
     idx_len = len(idx_list)
 
     class ProcessHandler(object):
-
         def run(self):
             curr = time.time()
             for name, func in inspect.getmembers(self, inspect.isroutine):
@@ -325,11 +324,11 @@ def export_fbx(save_path, mapper, data, attr_list, controller):
             if not vertex_data.get(UV):
                 return
 
-            uvs_indices = idx_data
+            uvs_indices = ",".join([str(idx) for idx in idx_list])
             uvs = [
                 # NOTE flip y axis
                 str(1 - v if i else v)
-                for values in vertex_data[UV].values()
+                for idx, values in sorted(vertex_data[UV].items())
                 for i, v in enumerate(values)
             ]
 
@@ -368,11 +367,11 @@ def export_fbx(save_path, mapper, data, attr_list, controller):
             if not vertex_data.get(UV2):
                 return
 
-            uvs_indices = idx_data
+            uvs_indices = ",".join([str(idx) for idx in idx_list])
             uvs = [
                 # NOTE flip y axis
                 str(1 - v if i else v)
-                for values in vertex_data[UV2].values()
+                for idx, values in sorted(vertex_data[UV2].items())
                 for i, v in enumerate(values)
             ]
 
@@ -424,9 +423,7 @@ def error_log(func):
         except:
             import traceback
 
-            manager.MessageDialog(
-                "FBX Ouput Fail\n%s"%traceback.format_exc(), "Error!~"
-            )
+            manager.MessageDialog("FBX Ouput Fail\n%s" % traceback.format_exc(), "Error!~")
 
     return wrapper
 

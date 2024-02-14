@@ -449,7 +449,7 @@ def prepare_export(pyrenderdoc, data):
 
     # NOTE Get Data from QTableView directly
     main_window = pyrenderdoc.GetMainWindow().Widget()
-    table = main_window.findChild(QtWidgets.QTableView, "vsinData")
+    table = main_window.findChild(QtWidgets.QTableView, "inTable")
 
     model = table.model()
     row_count = model.rowCount()

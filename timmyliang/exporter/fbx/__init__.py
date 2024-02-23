@@ -147,14 +147,23 @@ def export_fbx(save_path, mapper, data, attr_list, controller):
         "LayerElementUV2Insert": "",
     }
 
-    POSITION = mapper.get("POSITION")
-    NORMAL = mapper.get("NORMAL")
-    BINORMAL = mapper.get("BINORMAL")
-    TANGENT = mapper.get("TANGENT")
-    COLOR = mapper.get("COLOR")
-    UV = mapper.get("UV")
-    UV2 = mapper.get("UV2")
-    ENGINE = mapper.get("ENGINE")
+    #POSITION = mapper.get("POSITION")
+    #NORMAL = mapper.get("NORMAL")
+    #BINORMAL = mapper.get("BINORMAL")
+    #TANGENT = mapper.get("TANGENT")
+    #COLOR = mapper.get("COLOR")
+    #UV = mapper.get("UV")
+    #UV2 = mapper.get("UV2")
+    #ENGINE = mapper.get("ENGINE")
+    
+    POSITION = "POSITION"
+    NORMAL = "NORMAL"
+    BINORMAL = "BINORMAL"
+    TANGENT = "TANGENT"
+    COLOR = "COLOR"
+    UV = "TEXCOORD0"
+    UV2 = "TEXCOORD1"
+    ENGINE = "ENGINE"
 
     min_poly = min(idx_dict)
     idx_list = [idx - min_poly for idx in idx_dict]
@@ -319,15 +328,19 @@ def export_fbx(save_path, mapper, data, attr_list, controller):
                     TypedIndex: 0
                 }
             """
-
+        
+       
+        
         def run_uv(self):
             if not vertex_data.get(UV):
                 return
+                
+            uvscalar = 4.0
 
             uvs_indices = ",".join([str(idx) for idx in idx_list])
             uvs = [
                 # NOTE flip y axis
-                str(1 - v if i else v)
+                str(1.0 - (float(v) * uvscalar) if i else (float(v) * uvscalar))
                 for idx, values in sorted(vertex_data[UV].items())
                 for i, v in enumerate(values)
             ]
@@ -367,10 +380,12 @@ def export_fbx(save_path, mapper, data, attr_list, controller):
             if not vertex_data.get(UV2):
                 return
 
+            uvscalar = 4.0
+            
             uvs_indices = ",".join([str(idx) for idx in idx_list])
             uvs = [
                 # NOTE flip y axis
-                str(1 - v if i else v)
+                str(1.0 - (float(v) * uvscalar) if i else (float(v) * uvscalar))
                 for idx, values in sorted(vertex_data[UV2].items())
                 for i, v in enumerate(values)
             ]
@@ -423,7 +438,7 @@ def error_log(func):
         except:
             import traceback
 
-            manager.MessageDialog("FBX Ouput Fail\n%s" % traceback.format_exc(), "Error!~")
+            #manager.MessageDialog("FBX Ouput Fail\n%s" % traceback.format_exc(), "Error!~")
 
     return wrapper
 
@@ -432,14 +447,14 @@ def error_log(func):
 def prepare_export(pyrenderdoc, data):
     manager = pyrenderdoc.Extensions()
     if not pyrenderdoc.HasMeshPreview():
-        manager.ErrorDialog("No preview mesh!", "Error")
+        #manager.ErrorDialog("No preview mesh!", "Error")
         return
 
     mqt = manager.GetMiniQtHelper()
     dialog = QueryDialog(mqt)
     # NOTE get input attribute
-    if not mqt.ShowWidgetAsDialog(dialog.init_ui()):
-        return
+    #if not mqt.ShowWidgetAsDialog(dialog.init_ui()):
+    #    return
 
     save_path = manager.SaveFileName("Save FBX File", "", "*.fbx")
     if not save_path:
@@ -460,16 +475,32 @@ def prepare_export(pyrenderdoc, data):
     data = defaultdict(list)
     attr_list = set()
 
+
+    #for _, c in MProgressDialog.loop(columns, status="Collect Mesh Data"):
+    #    head = model.headerData(c, QtCore.Qt.Horizontal)
+    #    values = [model.data(model.index(r, c)) for r in rows]
+    #    if "." not in head:
+    #        data[head] = values
+    #    else:
+    #        attr = head.split(".")[0]
+    #        attr_list.add(attr)
+    #        data[attr].append(values)
+    
     for _, c in MProgressDialog.loop(columns, status="Collect Mesh Data"):
         head = model.headerData(c, QtCore.Qt.Horizontal)
         values = [model.data(model.index(r, c)) for r in rows]
+        
+        # #TODO: fix vertex restart!
+        #values = [float(0.0) if isinstance(value, str) and value == " Restart" else value for value in values]
+        #values = [-1 if isinstance(value, str) and value == "--" else value for value in values]
+        
         if "." not in head:
             data[head] = values
         else:
             attr = head.split(".")[0]
             attr_list.add(attr)
             data[attr].append(values)
-
+    
     for _, attr in MProgressDialog.loop(attr_list, status="Rearrange Mesh Data"):
         values_list = data[attr]
         data[attr] = [[float(values[r]) for values in values_list] for r in rows]
@@ -477,9 +508,9 @@ def prepare_export(pyrenderdoc, data):
     print("elapsed time unpack: %s" % (time.time() - current))
     pyrenderdoc.Replay().BlockInvoke(partial(export_fbx, save_path, dialog.mapper, data, attr_list))
 
-    if os.path.exists(save_path):
-        os.startfile(os.path.dirname(save_path))
-        manager.MessageDialog("FBX Ouput Sucessfully", "Congradualtion!~")
+    #if os.path.exists(save_path):
+        #os.startfile(os.path.dirname(save_path))
+        #manager.MessageDialog("FBX Ouput Sucessfully", "Congradualtion!~")
 
 
 def register(version, pyrenderdoc):
